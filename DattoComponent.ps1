@@ -23,9 +23,9 @@ function Test-EventLog {
 }
 
 # Test Block - Sources
-$ArraySources = "MsiInstaller, Outlook"
-[List[String]]$tmpArrayApplcations = $ArrayApplications.Split(",")
-$tmpArrayApplcations = $tmpArrayApplcations | ForEach-Object -MemberName Trim
+$ArraySources = "MsiInstaller,Outlook ,Obvious fake source"
+[List[String]]$ArraySources = $ArraySources.Split(",")
+$ArraySources = $ArraySources | ForEach-Object -MemberName Trim
 
 # Test Block - Remove at end
 $Array = "30,40,20,50,2000"
@@ -40,7 +40,7 @@ $tmpArrayApplcations = $tmpArrayApplcations | ForEach-Object -MemberName Trim
 $Time = 34
 
 #Test Directory
-$Directory = 'C:\Users\Sean\Music'
+$Directory = 'C:\Users\sohora\Music'
 
 
 # First we need to convert the given variables to valid inputs
@@ -107,8 +107,8 @@ if([System.IO.Path]::IsPathRooted($Directory)) {
 for($i = 0; $i+1 -le ($ArraySources | Measure-Object).Count; $i++)  {
     if(-not (Test-EventLog $ArraySources[$i])) {
         #Application provided by user not found in available log list
-        Write-Host "Event log $($tmpArrayApplcations[$i]) is not present on this device, Skipping."
-        $tmpArrayApplcations.RemoveAt($i)
+        Write-Host "Event log $($ArraySources[$i]) is not present on this device, Skipping."
+        $ArraySources.RemoveAt($i)
     }
 }
 
