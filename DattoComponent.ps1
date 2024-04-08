@@ -18,8 +18,11 @@ function Test-EventLog {
         [Parameter(Mandatory=$true)]
         [string] $Source
     )
-
-    [System.Diagnostics.EventLog]::SourceExists($Source)
+    try {
+        [System.Diagnostics.EventLog]::SourceExists($Source)
+    } catch {
+        $false
+    }
 }
 
 # Test Block - Sources
@@ -63,7 +66,7 @@ foreach ($eventCode in $tmpArray) {
 
 # Validate logs
 # Pull full list of log views on device:
-$LogList = Get-EventLog -List | Select-Object -ExpandProperty Log
+$LogList = Get-WinEvent -List | Select-Object -ExpandProperty Log
 
 # Compare list - Looping on provided list from user and will compare each variable based and check each one
 # Will remove any event log not found.
@@ -72,7 +75,7 @@ for($i = 0; $i+1 -le ($tmpArrayApplcations | Measure-Object).Count; $i++)  {
     if(-not ($LogList.Contains($tmpArrayApplcations[$i]))) {
 
         #Application provided by user not found in available log list
-        Write-Host "Event log $($tmpArrayApplcations[$i]) is not present on this device, Skipping."
+        Write-Host "Event log $($tmpArrayApplcations[$i]) is not present on this device, Excluding."
         $tmpArrayApplcations.RemoveAt($i)
     }
 }
@@ -107,8 +110,14 @@ if([System.IO.Path]::IsPathRooted($Directory)) {
 for($i = 0; $i+1 -le ($ArraySources | Measure-Object).Count; $i++)  {
     if(-not (Test-EventLog $ArraySources[$i])) {
         #Application provided by user not found in available log list
-        Write-Host "Event log $($ArraySources[$i]) is not present on this device, Skipping."
+        Write-Host "Event log $($ArraySources[$i]) is not present on this device, Excluding."
         $ArraySources.RemoveAt($i)
     }
 }
+
+
+#
+# Execution
+# Now all variables have been validated we can go ahead with the execution
+#
 
