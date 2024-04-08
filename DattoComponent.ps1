@@ -12,6 +12,21 @@
 # Author: Sean O'Hora - 07/04/2024
 #
 
+# Requires admin may need to be removed/changed
+function Test-EventLog {
+    Param(
+        [Parameter(Mandatory=$true)]
+        [string] $Source
+    )
+
+    [System.Diagnostics.EventLog]::SourceExists($Source)
+}
+
+# Test Block - Sources
+$ArraySources = "MsiInstaller, Outlook"
+[List[String]]$tmpArrayApplcations = $ArrayApplications.Split(",")
+$tmpArrayApplcations = $tmpArrayApplcations | ForEach-Object -MemberName Trim
+
 # Test Block - Remove at end
 $Array = "30,40,20,50,2000"
 $tmpArray = $Array.Split(",")
@@ -35,10 +50,10 @@ $Directory = 'C:\Users\Sean\Music'
 # Validation
 #
 
-#Check if all event codes given are valid
+# Check if all event codes given are valid
 foreach ($eventCode in $tmpArray) {
  
-    #Check if the given code is valid
+    # Check if the given code is valid
     if ($eventCode -match '^\d+$' -and [int]$eventCode -le 65535) {
         #Valid Error Code
     } else {
@@ -46,24 +61,24 @@ foreach ($eventCode in $tmpArray) {
     }
 }
 
-#Validate logs
-#Pull full list of log views on device:
+# Validate logs
+# Pull full list of log views on device:
 $LogList = Get-EventLog -List | Select-Object -ExpandProperty Log
 
-#Compare list - Looping on provided list from user and will compare each variable based and check each one
-#Will remove any event log not found.
-#For loop used to allow for removal of catalogue not available as foreach changes to collection will crash
-
+# Compare list - Looping on provided list from user and will compare each variable based and check each one
+# Will remove any event log not found.
+# For loop used to allow for removal of catalogue not available as foreach changes to collection will crash
 for($i = 0; $i+1 -le ($tmpArrayApplcations | Measure-Object).Count; $i++)  {
     if(-not ($LogList.Contains($tmpArrayApplcations[$i]))) {
+
         #Application provided by user not found in available log list
         Write-Host "Event log $($tmpArrayApplcations[$i]) is not present on this device, Skipping."
         $tmpArrayApplcations.RemoveAt($i)
     }
 }
 
-#Validate time
-#Check if number provided
+# Validate time
+# Check if number provided
 if ($eventCode -match '^\d+$') {
     Write-Host "Time validated"
 } else {
@@ -83,3 +98,17 @@ if([System.IO.Path]::IsPathRooted($Directory)) {
 } else {
     throw [System.ArgumentException]"Invalid link, Please ensure that a fully-qualified paths is used."
 }
+
+# Validate sources
+# Requires admin may need to be removed
+# Compare list - Looping on provided list from user and will compare each variable based and check each one
+# Will remove any event log not found.
+# For loop used to allow for removal of sources not available as foreach changes to collection will crash
+for($i = 0; $i+1 -le ($ArraySources | Measure-Object).Count; $i++)  {
+    if(-not (Test-EventLog $ArraySources[$i])) {
+        #Application provided by user not found in available log list
+        Write-Host "Event log $($tmpArrayApplcations[$i]) is not present on this device, Skipping."
+        $tmpArrayApplcations.RemoveAt($i)
+    }
+}
+
