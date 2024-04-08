@@ -43,7 +43,7 @@ $tmpArrayApplcations = $tmpArrayApplcations | ForEach-Object -MemberName Trim
 $Time = 34
 
 #Test Directory
-$Directory = 'C:\Users\sohora\Music'
+$Directory = 'C:\Users\sohora\Videos'
 
 
 # First we need to convert the given variables to valid inputs
@@ -66,7 +66,7 @@ foreach ($eventCode in $tmpArray) {
 
 # Validate logs
 # Pull full list of log views on device:
-$LogList = Get-WinEvent -List | Select-Object -ExpandProperty Log
+$LogList = Get-WinEvent -ListLog | Select-Object -ExpandProperty Log
 
 # Compare list - Looping on provided list from user and will compare each variable based and check each one
 # Will remove any event log not found.
@@ -119,5 +119,12 @@ for($i = 0; $i+1 -le ($ArraySources | Measure-Object).Count; $i++)  {
 #
 # Execution
 # Now all variables have been validated we can go ahead with the execution
+# What will be done:
+# Loop on each LogNames
+# We will save each log as a seperate csv
 #
+
+$tmpArrayApplcations | ForEach-Object {
+    Get-WinEvent -LogName $_ -MaxEvents 10 | Select-Object -Property LogIsolation,LastWriteTime,LogType,Id,Message | Export-Csv -path "$Directory\$_.csv" -NoClobber
+}
 
