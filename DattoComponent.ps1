@@ -32,7 +32,7 @@ $ArraySources = "MsiInstaller,Outlook ,Obvious fake source"
 $ArraySources = $ArraySources | ForEach-Object -MemberName Trim
 
 # Test Block - Remove at end
-$Array = "30,40,20,50,2000"
+$Array = "30,40,20,50,2000,16384"
 $tmpArray = $Array.Split(",")
 
 # Test Block  - Applciation verification
@@ -84,12 +84,22 @@ for($i = 0; $i+1 -le ($tmpArrayApplcations | Measure-Object).Count; $i++)  {
     }
 }
 
-# Validate time
+# Validate Time
 # Check if number provided
-if ($eventCode -match '^\d+$') {
+if ($Time -match '^\d+$') {
     Write-Host "Time validated"
 } else {
-    throw [System.ArgumentException]"Invalid link, Please ensure that a fully-qualified paths is used."
+    throw [System.ArgumentException]"Invalid Days, Please ensure that a valid number of days are set."
+    exit 1
+}
+
+
+# Validate Limit
+# Check if number provided
+if ($eventCode -match '^\d+$') {
+    Write-Host "Limit validated"
+} else {
+    throw [System.ArgumentException]"Invalid Limit, Please ensure that a valid limit is set."
     exit 1
 }
 
@@ -129,6 +139,6 @@ for($i = 0; $i+1 -le ($ArraySources | Measure-Object).Count; $i++)  {
 #
 
 $tmpArrayApplcations | ForEach-Object {
-    Get-WinEvent -LogName $_ -MaxEvents $limit | Where-Object ID -in $tmpArray | Select-Object -Property ID,TimeCreated,ProviderName,DisplayLevelName,LogName,Message | Export-Csv -path "$Directory\$_.csv"
+    Get-WinEvent -LogName $_ -MaxEvents $limit | Where-Object ID -in $tmpArray | Select-Object -Property ID,TimeCreated,ProviderName,LevelDisplayName,LogName,Message | Export-Csv -path "$Directory\$_.csv"
 }
 
