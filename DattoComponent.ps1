@@ -125,6 +125,6 @@ for($i = 0; $i+1 -le ($ArraySources | Measure-Object).Count; $i++)  {
 #
 
 $tmpArrayApplcations | ForEach-Object {
-    Get-WinEvent -LogName $_ -MaxEvents 10 | Select-Object -Property LogIsolation,LastWriteTime,LogType,Id,Message | Export-Csv -path "$Directory\$_.csv" -NoClobber
+    Get-WinEvent -LogName $_ -MaxEvents 10 | Select-Object -Property ID,TimeCreated,ProviderName,DisplayLevelName,LogName,Message | Export-Csv -path "$Directory\$_.csv" -NoClobber
 }
 
