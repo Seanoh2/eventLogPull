@@ -26,7 +26,7 @@ function Test-EventLog {
     }
 }
 
-$currentTime = Get-Date -Format "yyyy-mm-dd--HH-mm-ss"
+$currentTime = Get-Date -Format "yyyy-MM-dd--HH-mm-ss"
 
 # Test Block - Sources
 $ArraySources = "MsiInstaller,Outlook ,Obvious fake source"
@@ -34,7 +34,7 @@ $ArraySources = "MsiInstaller,Outlook ,Obvious fake source"
 $ArraySources = $ArraySources | ForEach-Object -MemberName Trim
 
 # Test Block - Remove at end
-$Array = "30,40,20,50,2000,16384"
+$Array = "*"
 $tmpArray = $Array.Split(",")
 
 # Test Block  - Applciation verification
@@ -63,10 +63,10 @@ $Directory = 'C:\Users\sohora\Videos'
 foreach ($eventCode in $tmpArray) {
  
     # Check if the given code is valid
-    if ($eventCode -match '^\d+$' -and [int]$eventCode -le 65535) {
+    if (($eventCode -match '^\d+$' -and [int]$eventCode -le 65535) -or ($eventCode -eq "*")) {
         #Valid Error Code
     } else {
-        throw [System.ArgumentException]"Invalid directory, Event codes given were not in the correct format or a number dosen't exceeds 65535"
+        throw [System.ArgumentException]"Invalid given event code, Event codes given were not in the correct format or a number dosen't exceeds 65535"
     }
 }
 
@@ -88,7 +88,7 @@ for($i = 0; $i+1 -le ($tmpArrayApplcations | Measure-Object).Count; $i++)  {
 
 # Validate Time
 # Check if number provided
-if ($Time -match '^\d+$') {
+if ($null -ne $Time -and $Time -match '^\d+$') {
     Write-Host "Time validated"
 } else {
     throw [System.ArgumentException]"Invalid Days, Please ensure that a valid number of days are set."
@@ -98,7 +98,7 @@ if ($Time -match '^\d+$') {
 
 # Validate Limit
 # Check if number provided
-if ($eventCode -match '^\d+$') {
+if ($null -ne $limit -and $limit -match '^\d+$') {
     Write-Host "Limit validated"
 } else {
     throw [System.ArgumentException]"Invalid Limit, Please ensure that a valid limit is set."
@@ -141,6 +141,16 @@ for($i = 0; $i+1 -le ($ArraySources | Measure-Object).Count; $i++)  {
 #
 
 $tmpArrayApplcations | ForEach-Object {
-    Get-WinEvent -LogName $_ -MaxEvents $limit | Where-Object ID -in $tmpArray | Select-Object -Property ID,TimeCreated,ProviderName,LevelDisplayName,LogName,Message | Export-Csv -path "$Directory\$_-$currentTime.csv" -NoTypeInformation
+    $logName = $_
+    $events = Get-WinEvent -LogName $logName -MaxEvents $limit
+
+    # We will need to check if the array contains a *
+    # If the array contains '*',than skip the filter
+    if ($tmpArray -notcontains '*') {
+        $events = $events | Where-Object { $_.Id -in $tmpArray }
+    }
+
+    $events | Select-Object -Property ID,TimeCreated,ProviderName,LevelDisplayName,LogName,Message | 
+         Export-Csv -path "$Directory\$logName-$currentTime.csv" -NoTypeInformation
 }
 
