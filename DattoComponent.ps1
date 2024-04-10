@@ -26,6 +26,8 @@ function Test-EventLog {
     }
 }
 
+$currentTime = Get-Date -Format "yyyy-mm-dd--HH-mm-ss"
+
 # Test Block - Sources
 $ArraySources = "MsiInstaller,Outlook ,Obvious fake source"
 [List[String]]$ArraySources = $ArraySources.Split(",")
@@ -139,6 +141,6 @@ for($i = 0; $i+1 -le ($ArraySources | Measure-Object).Count; $i++)  {
 #
 
 $tmpArrayApplcations | ForEach-Object {
-    Get-WinEvent -LogName $_ -MaxEvents $limit | Where-Object ID -in $tmpArray | Select-Object -Property ID,TimeCreated,ProviderName,LevelDisplayName,LogName,Message | Export-Csv -path "$Directory\$_.csv"
+    Get-WinEvent -LogName $_ -MaxEvents $limit | Where-Object ID -in $tmpArray | Select-Object -Property ID,TimeCreated,ProviderName,LevelDisplayName,LogName,Message | Export-Csv -path "$Directory\$_-$currentTime.csv" -NoTypeInformation
 }
 
