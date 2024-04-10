@@ -8,6 +8,7 @@
 # Catalogue - What log will be pulled from the event log (Default: Application)
 # Source - What sources need to be present (Default: None)
 # Export - Where to export the finished CSV (Default: C:\Program Data\Centrastage)
+# Limit - How many events to grab per log
 #
 # Author: Sean O'Hora - 07/04/2024
 #
@@ -41,6 +42,9 @@ $tmpArrayApplcations = $tmpArrayApplcations | ForEach-Object -MemberName Trim
 
 #Test block - Time
 $Time = 34
+
+# Test block - Limit
+$limit = 10
 
 #Test Directory
 $Directory = 'C:\Users\sohora\Videos'
@@ -125,6 +129,6 @@ for($i = 0; $i+1 -le ($ArraySources | Measure-Object).Count; $i++)  {
 #
 
 $tmpArrayApplcations | ForEach-Object {
-    Get-WinEvent -LogName $_ -MaxEvents 10 | Select-Object -Property ID,TimeCreated,ProviderName,DisplayLevelName,LogName,Message | Export-Csv -path "$Directory\$_.csv" -NoClobber
+    Get-WinEvent -LogName $_ -MaxEvents $limit | Where-Object ID -in $tmpArray | Select-Object -Property ID,TimeCreated,ProviderName,DisplayLevelName,LogName,Message | Export-Csv -path "$Directory\$_.csv"
 }
 
