@@ -66,7 +66,7 @@ foreach ($eventCode in $tmpArray) {
 
 # Validate logs
 # Pull full list of log views on device:
-$LogList = Get-WinEvent -ListLog | Select-Object -ExpandProperty Log
+$LogList = Get-EventLog -List | Select-Object -ExpandProperty Log
 
 # Compare list - Looping on provided list from user and will compare each variable based and check each one
 # Will remove any event log not found.
@@ -110,7 +110,7 @@ if([System.IO.Path]::IsPathRooted($Directory)) {
 for($i = 0; $i+1 -le ($ArraySources | Measure-Object).Count; $i++)  {
     if(-not (Test-EventLog $ArraySources[$i])) {
         #Application provided by user not found in available log list
-        Write-Host "Event log $($ArraySources[$i]) is not present on this device, Excluding."
+        Write-Host "Event source $($ArraySources[$i]) is not present on this device, Excluding."
         $ArraySources.RemoveAt($i)
     }
 }
