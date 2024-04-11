@@ -26,21 +26,21 @@ function Test-EventLog {
     }
 }
 
-$currentTime = Get-Date -Format "yyyy-MM-dd--HH-mm-ss"
+$currentTime = Get-Date -Format "yyyy-MM-dd--HH-mm"
 
 # Test Block - Sources
-$ArraySources = "MsiInstaller,Outlook ,Obvious fake source"
-[List[String]]$ArraySources = $ArraySources.Split(",")
-$ArraySources = $ArraySources | ForEach-Object -MemberName Trim
+$sources = "MsiInstaller,Outlook ,Obvious fake source"
+[List[String]]$sources = $sources.Split(",")
+$sources = $sources | ForEach-Object -MemberName Trim
 
 # Test Block - Remove at end
-$Array = "*"
-$tmpArray = $Array.Split(",")
+$eventCodes = "*"
+$eventCodes = $eventCodes.Split(",")
 
 # Test Block  - Applciation verification
-$ArrayApplications = "Application, System, Fails"
-[List[String]]$tmpArrayApplcations = $ArrayApplications.Split(",")
-$tmpArrayApplcations = $tmpArrayApplcations | ForEach-Object -MemberName Trim
+$applications = "Application, System, Fails"
+[List[String]]$applications = $applications.Split(",")
+$applications = $applications | ForEach-Object -MemberName Trim
 
 #Test block - Time
 $Time = 34
@@ -53,14 +53,14 @@ $Directory = 'C:\Users\sohora\Videos'
 
 
 # First we need to convert the given variables to valid inputs
-# $tmpArray = %EventCodes%.Split(",")
+# $eventCodes = %EventCodes%.Split(",")
 
 #
 # Validation
 #
 
 # Check if all event codes given are valid
-foreach ($eventCode in $tmpArray) {
+foreach ($eventCode in $eventCodes) {
  
     # Check if the given code is valid
     if (($eventCode -match '^\d+$' -and [int]$eventCode -le 65535) -or ($eventCode -eq "*")) {
@@ -77,18 +77,18 @@ $LogList = Get-EventLog -List | Select-Object -ExpandProperty Log
 # Compare list - Looping on provided list from user and will compare each variable based and check each one
 # Will remove any event log not found.
 # For loop used to allow for removal of catalogue not available as foreach changes to collection will crash
-for($i = 0; $i+1 -le ($tmpArrayApplcations | Measure-Object).Count; $i++)  {
-    if(-not ($LogList.Contains($tmpArrayApplcations[$i]))) {
+for($i = 0; $i+1 -le ($applications | Measure-Object).Count; $i++)  {
+    if(-not ($LogList.Contains($applications[$i]))) {
 
         #Application provided by user not found in available log list
-        Write-Host "Event log $($tmpArrayApplcations[$i]) is not present on this device, Excluding."
-        $tmpArrayApplcations.RemoveAt($i)
+        Write-Host "Event log $($applications[$i]) is not present on this device, Excluding."
+        $applications.RemoveAt($i)
     }
 }
 
 # Validate Time
 # Check if number provided
-if ($null -ne $Time -and $Time -match '^\d+$') {
+if ($Time -match '^\d+$') {
     Write-Host "Time validated"
 } else {
     throw [System.ArgumentException]"Invalid Days, Please ensure that a valid number of days are set."
@@ -98,7 +98,7 @@ if ($null -ne $Time -and $Time -match '^\d+$') {
 
 # Validate Limit
 # Check if number provided
-if ($null -ne $limit -and $limit -match '^\d+$') {
+if ($limit -match '^\d+$') {
     Write-Host "Limit validated"
 } else {
     throw [System.ArgumentException]"Invalid Limit, Please ensure that a valid limit is set."
@@ -123,11 +123,11 @@ if([System.IO.Path]::IsPathRooted($Directory)) {
 # Compare list - Looping on provided list from user and will compare each variable based and check each one
 # Will remove any event log not found.
 # For loop used to allow for removal of sources not available as foreach changes to collection will crash
-for($i = 0; $i+1 -le ($ArraySources | Measure-Object).Count; $i++)  {
-    if(-not (Test-EventLog $ArraySources[$i])) {
+for($i = 0; $i+1 -le ($sources | Measure-Object).Count; $i++)  {
+    if(-not (Test-EventLog $sources[$i])) {
         #Application provided by user not found in available log list
-        Write-Host "Event source $($ArraySources[$i]) is not present on this device, Excluding."
-        $ArraySources.RemoveAt($i)
+        Write-Host "Event source $($sources[$i]) is not present on this device, Excluding."
+        $sources.RemoveAt($i)
     }
 }
 
@@ -140,14 +140,14 @@ for($i = 0; $i+1 -le ($ArraySources | Measure-Object).Count; $i++)  {
 # We will save each log as a seperate csv
 #
 
-$tmpArrayApplcations | ForEach-Object {
+$applications | ForEach-Object {
     $logName = $_
     $events = Get-WinEvent -LogName $logName -MaxEvents $limit
 
     # We will need to check if the array contains a *
     # If the array contains '*',than skip the filter
-    if ($tmpArray -notcontains '*') {
-        $events = $events | Where-Object { $_.Id -in $tmpArray }
+    if ($eventCodes -notcontains '*') {
+        $events = $events | Where-Object { $_.Id -in $eventCodes }
     }
 
     $events | Select-Object -Property ID,TimeCreated,ProviderName,LevelDisplayName,LogName,Message | 
