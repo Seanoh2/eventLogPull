@@ -28,32 +28,13 @@ function Test-EventLog {
 
 $currentTime = Get-Date -Format "yyyy-MM-dd--HH-mm"
 
-# Test Block - Sources
-$sources = "MsiInstaller,Outlook ,Obvious fake source"
-[List[String]]$sources = $sources.Split(",")
+[List[String]]$sources = $env:sources.Split(",")
 $sources = $sources | ForEach-Object -MemberName Trim
 
-# Test Block - Remove at end
-$eventCodes = "*"
-$eventCodes = $eventCodes.Split(",")
+$eventCodes = $env:eventCodes.Split(",")
 
-# Test Block  - Applciation verification
-$applications = "Application, System, Fails"
-[List[String]]$applications = $applications.Split(",")
+[List[String]]$applications = $env:$applications.Split(",")
 $applications = $applications | ForEach-Object -MemberName Trim
-
-#Test block - Time
-$Time = 34
-
-# Test block - Limit
-$limit = 10
-
-#Test Directory
-$Directory = 'C:\Users\sohora\Videos'
-
-
-# First we need to convert the given variables to valid inputs
-# $eventCodes = %EventCodes%.Split(",")
 
 #
 # Validation
@@ -88,7 +69,7 @@ for($i = 0; $i+1 -le ($applications | Measure-Object).Count; $i++)  {
 
 # Validate Time
 # Check if number provided
-if ($Time -match '^\d+$') {
+if ($env:$Time -match '^\d+$') {
     Write-Host "Time validated"
 } else {
     throw [System.ArgumentException]"Invalid Days, Please ensure that a valid number of days are set."
@@ -98,7 +79,7 @@ if ($Time -match '^\d+$') {
 
 # Validate Limit
 # Check if number provided
-if ($limit -match '^\d+$') {
+if ($env:limit -match '^\d+$') {
     Write-Host "Limit validated"
 } else {
     throw [System.ArgumentException]"Invalid Limit, Please ensure that a valid limit is set."
@@ -108,8 +89,8 @@ if ($limit -match '^\d+$') {
 #Validate export
 #Check if valid directory - first check if valid link
 
-if([System.IO.Path]::IsPathRooted($Directory)) {
-    if(Test-Path $Directory) {
+if([System.IO.Path]::IsPathRooted($env:directory)) {
+    if(Test-Path $env:directory) {
         Write-Host "Directory found & validated"
     } else {
         throw [System.ArgumentException]"Missing directory, Please ensure that this path exists on the device."
@@ -142,7 +123,7 @@ for($i = 0; $i+1 -le ($sources | Measure-Object).Count; $i++)  {
 
 $applications | ForEach-Object {
     $logName = $_
-    $events = Get-WinEvent -LogName $logName -MaxEvents $limit
+    $events = Get-WinEvent -LogName $logName -MaxEvents $env:limit
 
     # We will need to check if the array contains a *
     # If the array contains '*',than skip the filter
@@ -151,6 +132,6 @@ $applications | ForEach-Object {
     }
 
     $events | Select-Object -Property ID,TimeCreated,ProviderName,LevelDisplayName,LogName,Message | 
-         Export-Csv -path "$Directory\$logName-$currentTime.csv" -NoTypeInformation
+         Export-Csv -path "$env:directory\$logName-$currentTime.csv" -NoTypeInformation
 }
 
