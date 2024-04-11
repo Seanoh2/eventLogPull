@@ -3,12 +3,12 @@
 #
 # Datto component - Extract event logs and saves them to a CSV
 # Variables :
-# Event Codes - What codes you will pull (Default: ALL)
-# Time - How many days from now will you pull these variables from (Default: 7)
-# Catalogue - What log will be pulled from the event log (Default: Application)
-# Source - What sources need to be present (Default: None)
-# Export - Where to export the finished CSV (Default: C:\Program Data\Centrastage)
-# Limit - How many events to grab per log
+# eventCodes - What codes you will pull (Default: ALL)
+# time - How many days from now will you pull these variables from (Default: 7)
+# applications - What log will be pulled from the event log (Default: Application)
+# sources - What sources need to be present (Default: None)
+# directory - Where to export the finished CSV (Default: C:\Program Data\Centrastage)
+# Llimit - How many events to grab per log
 #
 # Author: Sean O'Hora - 07/04/2024
 #
@@ -28,12 +28,13 @@ function Test-EventLog {
 
 $currentTime = Get-Date -Format "yyyy-MM-dd--HH-mm"
 
-[List[String]]$sources = $env:sources.Split(",")
+[List[String]]$sources = $Env:sources.Split(",")
 $sources = $sources | ForEach-Object -MemberName Trim
 
-$eventCodes = $env:eventCodes.Split(",")
+$eventCodes = $Env:eventCodes.Split(",")
+$sources = $sources | ForEach-Object -MemberName Trim
 
-[List[String]]$applications = $env:$applications.Split(",")
+[List[String]]$applications = $Env:applications.Split(",")
 $applications = $applications | ForEach-Object -MemberName Trim
 
 #
@@ -69,7 +70,7 @@ for($i = 0; $i+1 -le ($applications | Measure-Object).Count; $i++)  {
 
 # Validate Time
 # Check if number provided
-if ($env:$Time -match '^\d+$') {
+if ($Env:Time -match '^\d+$') {
     Write-Host "Time validated"
 } else {
     throw [System.ArgumentException]"Invalid Days, Please ensure that a valid number of days are set."
@@ -79,7 +80,7 @@ if ($env:$Time -match '^\d+$') {
 
 # Validate Limit
 # Check if number provided
-if ($env:limit -match '^\d+$') {
+if ($Env:limit -match '^\d+$') {
     Write-Host "Limit validated"
 } else {
     throw [System.ArgumentException]"Invalid Limit, Please ensure that a valid limit is set."
@@ -89,8 +90,8 @@ if ($env:limit -match '^\d+$') {
 #Validate export
 #Check if valid directory - first check if valid link
 
-if([System.IO.Path]::IsPathRooted($env:directory)) {
-    if(Test-Path $env:directory) {
+if([System.IO.Path]::IsPathRooted($Env:directory)) {
+    if(Test-Path $Env:directory) {
         Write-Host "Directory found & validated"
     } else {
         throw [System.ArgumentException]"Missing directory, Please ensure that this path exists on the device."
@@ -103,10 +104,11 @@ if([System.IO.Path]::IsPathRooted($env:directory)) {
 # Requires admin may need to be removed
 # Compare list - Looping on provided list from user and will compare each variable based and check each one
 # Will remove any event log not found.
-# For loop used to allow for removal of sources not available as foreach changes to collection will crash
-for($i = 0; $i+1 -le ($sources | Measure-Object).Count; $i++)  {
-    if(-not (Test-EventLog $sources[$i])) {
-        #Application provided by user not found in available log list
+# For loop done in reverse to avoid interation issues
+for ($i = $sources.Count - 1; $i -ge 0; $i--) {
+    if (-not (Test-EventLog $sources[$i])) {
+
+        #Source name provided not found on device
         Write-Host "Event source $($sources[$i]) is not present on this device, Excluding."
         $sources.RemoveAt($i)
     }
@@ -123,7 +125,7 @@ for($i = 0; $i+1 -le ($sources | Measure-Object).Count; $i++)  {
 
 $applications | ForEach-Object {
     $logName = $_
-    $events = Get-WinEvent -LogName $logName -MaxEvents $env:limit
+    $events = Get-WinEvent -LogName $logName -MaxEvents $Env:limit
 
     # We will need to check if the array contains a *
     # If the array contains '*',than skip the filter
@@ -132,6 +134,6 @@ $applications | ForEach-Object {
     }
 
     $events | Select-Object -Property ID,TimeCreated,ProviderName,LevelDisplayName,LogName,Message | 
-         Export-Csv -path "$env:directory\$logName-$currentTime.csv" -NoTypeInformation
+         Export-Csv -path "$Env:directory\$logName-$currentTime.csv" -NoTypeInformation
 }
 
