@@ -26,6 +26,19 @@ function Test-EventLog {
     }
 }
 
+function Test-EventCode {
+    Param(
+        [Parameter(Mandatory=$true)]
+        [string] $eventCode
+    )
+    # Check if the given code is valid
+    if (($eventCode -match '^\d+$' -and [int]$eventCode -le 65535) -or ($eventCode -eq "*")) {
+        return $true
+    } else {
+        throw [System.ArgumentException]"Invalid given event code, Event codes given were not in the correct format or a number dosen't exceeds 65535"
+    }
+}
+
 $currentTime = Get-Date -Format "yyyy-MM-dd--HH-mm"
 
 [List[String]]$sources = $Env:sources.Split(",")
@@ -42,15 +55,10 @@ $applications = $applications | ForEach-Object -MemberName Trim
 #
 
 # Check if all event codes given are valid
-foreach ($eventCode in $eventCodes) {
- 
-    # Check if the given code is valid
-    if (($eventCode -match '^\d+$' -and [int]$eventCode -le 65535) -or ($eventCode -eq "*")) {
-        #Valid Error Code
-    } else {
-        throw [System.ArgumentException]"Invalid given event code, Event codes given were not in the correct format or a number dosen't exceeds 65535"
+    foreach ($eventCode in $eventCodes) {
+        Test-EventCode $eventCode
     }
-}
+
 
 # Validate logs
 # Pull full list of log views on device:
