@@ -3,12 +3,12 @@
 #
 # Datto component - Extract event logs and saves them to a CSV
 # Variables :
-# eventCodes - What codes you will pull (Default: ALL)
-# time - How many days from now will you pull these variables from (Default: 7)
-# applications - What log will be pulled from the event log (Default: Application)
-# sources - What sources need to be present (Default: None)
-# directory - Where to export the finished CSV (Default: C:\Program Data\Centrastage)
-# Llimit - How many events to grab per log
+# Event Codes - What codes you will pull (Default: ALL)
+# Time - How many days from now will you pull these variables from (Default: 7)
+# Catalogue - What log will be pulled from the event log (Default: Application)
+# Source - What sources need to be present (Default: None)
+# Export - Where to export the finished CSV (Default: C:\Program Data\Centrastage)
+# Limit - How many events to grab per log
 #
 # Author: Sean O'Hora - 07/04/2024
 #
@@ -26,39 +26,51 @@ function Test-EventLog {
     }
 }
 
-function Test-EventCode {
-    Param(
-        [Parameter(Mandatory=$true)]
-        [string] $eventCode
-    )
-    # Check if the given code is valid
-    if (($eventCode -match '^\d+$' -and [int]$eventCode -le 65535) -or ($eventCode -eq "*")) {
-        return $true
-    } else {
-        throw [System.ArgumentException]"Invalid given event code, Event codes given were not in the correct format or a number dosen't exceeds 65535"
-    }
-}
-
 $currentTime = Get-Date -Format "yyyy-MM-dd--HH-mm"
 
-[List[String]]$sources = $Env:sources.Split(",")
+# Test Block - Sources
+$sources = "MsiInstaller,Outlook ,Obvious fake source"
+[List[String]]$sources = $sources.Split(",")
 $sources = $sources | ForEach-Object -MemberName Trim
 
-$eventCodes = $Env:eventCodes.Split(",")
-$sources = $sources | ForEach-Object -MemberName Trim
+# Test Block - Remove at end
+$eventCodes = "*"
+$eventCodes = $eventCodes.Split(",")
 
-[List[String]]$applications = $Env:applications.Split(",")
+# Test Block  - Applciation verification
+$applications = "Application, System, Fails"
+[List[String]]$applications = $applications.Split(",")
 $applications = $applications | ForEach-Object -MemberName Trim
+
+#Test block - Time
+$Time = 34
+
+# Test block - Limit
+$limit = 10
+
+#Test Directory
+$Directory = 'C:\Users\Sean\Videos'
+
+# NEED TO REMOVE - DATTO RANDOMIZES SCRIPT NAMES
+if([System.IO.Path]::GetFileName($MyInvocation.PSCommandPath) -eq 'DattoComponent.ps1') {
+
+# First we need to convert the given variables to valid inputs
+# $eventCodes = %EventCodes%.Split(",")
 
 #
 # Validation
 #
 
 # Check if all event codes given are valid
-    foreach ($eventCode in $eventCodes) {
-        Test-EventCode $eventCode
+foreach ($eventCode in $eventCodes) {
+ 
+    # Check if the given code is valid
+    if (($eventCode -match '^\d+$' -and [int]$eventCode -le 65535) -or ($eventCode -eq "*")) {
+        #Valid Error Code
+    } else {
+        throw [System.ArgumentException]"Invalid given event code, Event codes given were not in the correct format or a number dosen't exceeds 65535"
     }
-
+}
 
 # Validate logs
 # Pull full list of log views on device:
@@ -78,7 +90,7 @@ for($i = 0; $i+1 -le ($applications | Measure-Object).Count; $i++)  {
 
 # Validate Time
 # Check if number provided
-if ($Env:Time -match '^\d+$') {
+if ($Time -match '^\d+$') {
     Write-Host "Time validated"
 } else {
     throw [System.ArgumentException]"Invalid Days, Please ensure that a valid number of days are set."
@@ -88,7 +100,7 @@ if ($Env:Time -match '^\d+$') {
 
 # Validate Limit
 # Check if number provided
-if ($Env:limit -match '^\d+$') {
+if ($limit -match '^\d+$') {
     Write-Host "Limit validated"
 } else {
     throw [System.ArgumentException]"Invalid Limit, Please ensure that a valid limit is set."
@@ -98,8 +110,8 @@ if ($Env:limit -match '^\d+$') {
 #Validate export
 #Check if valid directory - first check if valid link
 
-if([System.IO.Path]::IsPathRooted($Env:directory)) {
-    if(Test-Path $Env:directory) {
+if([System.IO.Path]::IsPathRooted($Directory)) {
+    if(Test-Path $Directory) {
         Write-Host "Directory found & validated"
     } else {
         throw [System.ArgumentException]"Missing directory, Please ensure that this path exists on the device."
@@ -112,11 +124,10 @@ if([System.IO.Path]::IsPathRooted($Env:directory)) {
 # Requires admin may need to be removed
 # Compare list - Looping on provided list from user and will compare each variable based and check each one
 # Will remove any event log not found.
-# For loop done in reverse to avoid interation issues
-for ($i = $sources.Count - 1; $i -ge 0; $i--) {
-    if (-not (Test-EventLog $sources[$i])) {
-
-        #Source name provided not found on device
+# For loop used to allow for removal of sources not available as foreach changes to collection will crash
+for($i = 0; $i+1 -le ($sources | Measure-Object).Count; $i++)  {
+    if(-not (Test-EventLog $sources[$i])) {
+        #Application provided by user not found in available log list
         Write-Host "Event source $($sources[$i]) is not present on this device, Excluding."
         $sources.RemoveAt($i)
     }
@@ -133,7 +144,7 @@ for ($i = $sources.Count - 1; $i -ge 0; $i--) {
 
 $applications | ForEach-Object {
     $logName = $_
-    $events = Get-WinEvent -LogName $logName -MaxEvents $Env:limit
+    $events = Get-WinEvent -LogName $logName -MaxEvents $limit
 
     # We will need to check if the array contains a *
     # If the array contains '*',than skip the filter
@@ -142,6 +153,6 @@ $applications | ForEach-Object {
     }
 
     $events | Select-Object -Property ID,TimeCreated,ProviderName,LevelDisplayName,LogName,Message | 
-         Export-Csv -path "$Env:directory\$logName-$currentTime.csv" -NoTypeInformation
+         Export-Csv -path "$Directory\$logName-$currentTime.csv" -NoTypeInformation
+    }
 }
-

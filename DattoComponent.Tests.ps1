@@ -1,5 +1,5 @@
 BeforeAll {
-    .$PSScriptRoot/DattoComponent.ps1
+    . $PSCommandPath.Replace('.Tests.ps1','.ps1')
     $Env:directory = "C:\Users\sohora\Videos"
     $Env:eventCode = "*"
     $Env:applications = "Applications, System, Fails"
@@ -10,7 +10,7 @@ BeforeAll {
 
 Describe "Event Code Validation" {
     It "Validate codes" {
-        $eventCodes = "*"
-        Test-Eventlog $eventCodes | should -be True
+        $eventCodes = "MsiInstaller"
+        Test-EventLog $eventCodes | should -be True
     }
 }
