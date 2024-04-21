@@ -14,7 +14,7 @@
 #
 
 # Requires admin may need to be removed/changed
-function Test-EventLog {
+function SourceValidation {
     Param(
         [Parameter(Mandatory=$true)]
         [string] $Source
@@ -126,7 +126,7 @@ if([System.IO.Path]::IsPathRooted($Directory)) {
 # Will remove any event log not found.
 # For loop used to allow for removal of sources not available as foreach changes to collection will crash
 for($i = 0; $i+1 -le ($sources | Measure-Object).Count; $i++)  {
-    if(-not (Test-EventLog $sources[$i])) {
+    if(-not (SourceValidation $sources[$i])) {
         #Application provided by user not found in available log list
         Write-Host "Event source $($sources[$i]) is not present on this device, Excluding."
         $sources.RemoveAt($i)
